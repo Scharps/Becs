@@ -2,26 +2,26 @@
 
 use std::cell::{Ref, RefCell, RefMut};
 
-trait ComponentVec {
+pub trait ComponentVec {
     fn push_none(&mut self);
     fn as_any(&self) -> &dyn std::any::Any;
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any;
 }
 
-struct World {
+pub struct World {
     entities_count: usize,
     component_vecs: Vec<Box<dyn ComponentVec>>,
 }
 
 impl World {
-    fn new() -> Self {
+    pub fn new() -> Self {
         World {
             entities_count: 0,
             component_vecs: Vec::new(),
         }
     }
 
-    fn new_entity(&mut self) -> usize {
+    pub fn new_entity(&mut self) -> usize {
         // Create id;
         let entity_id = self.entities_count;
 
@@ -37,7 +37,7 @@ impl World {
         entity_id
     }
 
-    fn add_component_to_entity<ComponentType: 'static>(
+    pub fn add_component_to_entity<ComponentType: 'static>(
         &mut self,
         entity: usize,
         component: ComponentType,
@@ -70,7 +70,7 @@ impl World {
             .push(Box::new(RefCell::new(new_component_vec)))
     }
 
-    fn borrow_component_vec<ComponentType: 'static>(
+    pub fn borrow_component_vec<ComponentType: 'static>(
         &self,
     ) -> Option<Ref<Vec<Option<ComponentType>>>> {
         for component_vec in self.component_vecs.iter() {
@@ -84,7 +84,7 @@ impl World {
         None
     }
 
-    fn borrow_component_vec_mut<ComponentType: 'static>(
+    pub fn borrow_component_vec_mut<ComponentType: 'static>(
         &self,
     ) -> Option<RefMut<Vec<Option<ComponentType>>>> {
         for component_vec in self.component_vecs.iter() {
