@@ -119,7 +119,7 @@ impl<T: 'static> ComponentVec for RefCell<Vec<Option<T>>> {
     }
 }
 
-type System = dyn Fn(&mut World);
+pub type System = dyn Fn(&mut World);
 
 #[cfg(test)]
 mod tests {
