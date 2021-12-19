@@ -97,6 +97,12 @@ impl World {
         }
         None
     }
+
+    pub fn update(&mut self, systems: &[Box<System>]) {
+        for system in systems {
+            system(self)
+        }
+    }
 }
 
 impl<T: 'static> ComponentVec for RefCell<Vec<Option<T>>> {
@@ -113,12 +119,14 @@ impl<T: 'static> ComponentVec for RefCell<Vec<Option<T>>> {
     }
 }
 
+type System = dyn Fn(&mut World);
+
 #[cfg(test)]
 mod tests {
-    use crate::World;
+    use crate::{System, World};
 
     #[test]
-    fn systems() {
+    fn non_update() {
         struct Health(i32);
         struct Name(&'static str);
 
@@ -138,5 +146,42 @@ mod tests {
 
             println!("{} has been healed to {}", name.0, health.0);
         }
+    }
+
+    #[test]
+    fn update() {
+        struct Health(i32);
+        struct Name(&'static str);
+
+        let mut world = World::new();
+        let entity = world.new_entity();
+        world.add_component_to_entity(entity, Name("Somebody"));
+        world.add_component_to_entity(entity, Health(10));
+
+        let heal_system: Box<System> = Box::new(|world| {
+            let mut healths = world.borrow_component_vec_mut::<Health>().unwrap();
+            let names = world.borrow_component_vec_mut::<Name>().unwrap();
+            let zip = healths.iter_mut().zip(names.iter());
+
+            for (health, name) in
+                zip.filter_map(|(health, name)| Some((health.as_mut()?, name.as_ref()?)))
+            {
+                health.0 = 100;
+                println!("{} healed to 100!", name.0)
+            }
+        });
+
+        let rename_system: Box<System> = Box::new(|world| {
+            let mut names = world.borrow_component_vec_mut::<Name>().unwrap();
+            for name in names.iter_mut().filter_map(|name| Some(name.as_mut()?)) {
+                let tmp = name.0;
+                name.0 = "New name";
+                println!("\"{}\" is now \"{}\"", tmp, name.0)
+            }
+        });
+
+        let systems = vec![heal_system, rename_system];
+
+        world.update(&systems);
     }
 }
